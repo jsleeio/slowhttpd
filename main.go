@@ -33,7 +33,7 @@ func requestLogger(logger *log.Logger, h http.Handler) http.Handler {
 		logger.WithFields(log.Fields{
 			"uri":      r.RequestURI,
 			"method":   r.Method,
-			"duration": time.Since(start),
+			"duration": time.Since(start).Seconds(),
 		}).Info("processing request")
 	}
 	return http.HandlerFunc(logFn)
@@ -61,6 +61,11 @@ func main() {
 		Level: log.DebugLevel,
 		Formatter: &log.JSONFormatter{
 			TimestampFormat: time.RFC3339,
+			FieldMap: log.FieldMap{
+				log.FieldKeyTime:  "timestamp",
+				log.FieldKeyLevel: "severity",
+				log.FieldKeyMsg:   "message",
+			},
 		},
 	}
 	c, err := configure()

@@ -14,27 +14,38 @@ The extent of the delay is configured with the `-min=DURATION` and
 
 ```
 $ ./slowhttpd -min=1s -max=2s -listen=:3000
-{"level":"info","msg":"listening on :3000","time":"2024-05-13T12:22:31+10:00"}
-{"duration":1039669708,"level":"info","method":"GET","msg":"processing request","time":"2024-05-13T12:24:04+10:00","uri":"/randomsleep"}
-{"duration":1195779958,"level":"info","method":"GET","msg":"processing request","time":"2024-05-13T12:24:09+10:00","uri":"/randomsleep"}
+{"message":"listening on :3000","severity":"info","timestamp":"2024-05-13T14:25:53+10:00"}
+
+[... later, after some requests ...]
+
+{"duration":1.9069897089999999,"message":"processing request","method":"GET","severity":"info","timestamp":"2024-05-13T14:25:58+10:00","uri":"/randomsleep"}
+{"duration":2.3649241659999998,"message":"processing request","method":"GET","severity":"info","timestamp":"2024-05-13T14:26:02+10:00","uri":"/randomsleep"}
+{"duration":1.427324625,"message":"processing request","method":"GET","severity":"info","timestamp":"2024-05-13T14:26:06+10:00","uri":"/randomsleep"}
+{"duration":0.58806725,"message":"processing request","method":"GET","severity":"info","timestamp":"2024-05-13T14:26:08+10:00","uri":"/randomsleep"}
 ```
 
 ### make requests
 
 ```
-$ time curl http://localhost:3000/randomsleep
+$ curl http://0:3000/randomsleep
 *snore*
 
-real    0m1.079s
-user    0m0.007s
-sys 0m0.013s
-
-$ time curl http://localhost:3000/randomsleep
+$ curl http://0:3000/randomsleep
 *snore*
 
-real    0m1.221s
+$ time curl http://0:3000/randomsleep
+*snore*
+
+real    0m1.454s
+user    0m0.010s
+sys 0m0.011s
+
+$ time curl http://0:3000/randomsleep
+*snore*
+
+real    0m0.618s
 user    0m0.009s
-sys 0m0.008s
+sys 0m0.010s
 ```
 
 ### healthchecks
