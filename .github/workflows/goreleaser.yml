@@ -6,12 +6,11 @@ on:
     tags:
       - '*'
 
-
 jobs:
   goreleaser:
-		permissions:
-			contents: write
-			packages: write
+    permissions:
+      contents: write
+      packages: write
     runs-on: ubuntu-latest
     env:
       DOCKER_CLI_EXPERIMENTAL: "enabled"
