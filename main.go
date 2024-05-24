@@ -13,15 +13,26 @@ import (
 )
 
 type config struct {
-	listen   string
-	min, max time.Duration
+	listen                   string
+	listenhttps              string
+	min, max                 time.Duration
+	certificatefile, keyfile string
+	http01tokenpath          string
+	servehttps               bool
+	servehttp01token         bool
 }
 
 func configure() (c config, err error) {
+	flag.StringVar(&c.http01tokenpath, "http01", "", "path to directory containing ACME HTTP-01 challenge tokens")
+	flag.StringVar(&c.certificatefile, "certificate", "", "path to PEM-encoded certificate")
+	flag.StringVar(&c.keyfile, "key", "", "path to PEM-encoded private key")
 	flag.DurationVar(&c.min, "min", time.Millisecond*250, "minimum sleep time")
 	flag.DurationVar(&c.max, "max", time.Millisecond*2500, "maximum sleep time")
-	flag.StringVar(&c.listen, "listen", ":3000", "[IP address and] and port to listen on")
+	flag.StringVar(&c.listen, "listen", ":3000", "[IP address and] and port to listen on for HTTP requests")
+	flag.StringVar(&c.listenhttps, "listen-https", ":443", "[IP address and] and port to listen on for HTTPS requests")
 	flag.Parse()
+	c.servehttps = c.certificatefile != "" && c.keyfile != ""
+	c.servehttp01token = c.http01tokenpath != ""
 	return
 }
 
@@ -55,8 +66,8 @@ func health() http.Handler {
 	})
 }
 
-func main() {
-	logger := &log.Logger{
+func logger() *log.Logger {
+	return &log.Logger{
 		Out:   os.Stdout,
 		Level: log.DebugLevel,
 		Formatter: &log.JSONFormatter{
@@ -68,12 +79,27 @@ func main() {
 			},
 		},
 	}
+}
+
+func main() {
 	c, err := configure()
 	if err != nil {
 		log.Fatalf("configure: %v", err)
 	}
+	logger := logger()
+	mux := http.NewServeMux()
+	mux.Handle("/health", requestLogger(logger, health()))
+	mux.Handle("/randomsleep", requestLogger(logger, sleepyHandler(c.min, c.max)))
+	if c.servehttp01token {
+		fs := http.FileServer(http.Dir(c.http01tokenpath))
+		mux.Handle("/.well-known/acme-challenge/", requestLogger(logger, http.StripPrefix("/.well-known/acme-challenge", fs)))
+	}
+	if c.servehttps {
+		go func() {
+			logger.Printf("listening on %s", c.listenhttps)
+			log.Fatal(http.ListenAndServeTLS(c.listenhttps, c.certificatefile, c.keyfile, mux))
+		}()
+	}
 	logger.Printf("listening on %s", c.listen)
-	http.Handle("/health", requestLogger(logger, health()))
-	http.Handle("/randomsleep", requestLogger(logger, sleepyHandler(c.min, c.max)))
-	log.Fatal(http.ListenAndServe(c.listen, nil))
+	log.Fatal(http.ListenAndServe(c.listen, mux))
 }

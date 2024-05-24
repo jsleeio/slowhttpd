@@ -61,6 +61,18 @@ user    0m0.007s
 sys 0m0.015s
 ```
 
+### tls support
+
+`slowhttpd` has rudimentary HTTPS support. Specify key & certificate files via
+the corresponding CLI flags.
+
+### serving letsencrypt HTTP-01 challenges
+
+For convenience `slowhttpd` can also serve HTTP-01 challenges on the usual URL
+path, such as those written to files by [Certbot](https://certbot.eff.org/).
+
+Indicate the path to the challenge files with the `-http01` CLI flag.
+
 ## build it
 
 `slowhttpd` is setup to use Goreleaser and publish packages to Github Packages.
